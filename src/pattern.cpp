@@ -1,5 +1,4 @@
 #include "pattern.h"
-#include "prefetch.h"
 
 #include <algorithm>
 

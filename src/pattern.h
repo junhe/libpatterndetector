@@ -14,12 +14,11 @@
 #include <string.h>
 
 
-// Pattern Family (from small to big)
-// PatternUnit
-// PatternElem
-// PatternChain
+// Pattern Family (from small to big):
+//   PatternUnit
+//   PatternElem
+//   PatternChain
 
-class Request;
 template <class T> class PatChain;
 template <class T> class PatternChain;
 
@@ -27,9 +26,28 @@ using namespace std;
 
 typedef int32_t header_t; //the type to hold the body size in serialization
 
-//used to describe a single pattern that is found
-//This will be saved in the stack.
-//For example, (seq)^cnt=(3,5,8)^2
+class Request {
+    public:
+        off_t offset;
+        off_t length;
+
+        Request();
+        Request(off_t off, off_t len);
+};
+
+Request::Request(off_t off, off_t len)
+    : offset(off), 
+      length(len)
+{}
+
+Request::Request()
+    : offset(0),
+      length(0)
+{}
+
+// Used to describe a single pattern that is found
+// This will be saved in the stack.
+// For example, (seq)^cnt=(3,5,8)^2
 class PatternUnit {
     public:
         vector<off_t> seq;
@@ -45,8 +63,8 @@ class PatternUnit {
 };
 
 
-//This is used to describ a single repeating
-//pattern, but with starting value
+// This is used to describ a single repeating
+// pattern, but with starting value
 class PatternElem: public PatternUnit {
     public:
         off_t init; // the initial value of 
