@@ -87,12 +87,12 @@ Request::Request()
 
 
 ///////////////////////////////////////////////
-// PatternUnit
+// PatternElem
 ///////////////////////////////////////////////
 
 //return number of elements in total
 int
-PatternUnit::size() const 
+PatternElem::size() const 
 {
     if ( cnt == 0 ) {
         return 1; //not repetition
@@ -102,7 +102,7 @@ PatternUnit::size() const
 }
 
 string 
-PatternUnit::show() const
+PatternElem::show() const
 {
     vector<off_t>::const_iterator iter;
     ostringstream showstr;
@@ -118,9 +118,9 @@ PatternUnit::show() const
 }
 
 
-//Serialiezd PatternElem: [head:bodysize][body]
+//Serialiezd PatternUnit: [head:bodysize][body]
 header_t
-PatternElem::bodySize()
+PatternUnit::bodySize()
 {
     header_t totalsize;
     totalsize = sizeof(init) //init
@@ -137,7 +137,7 @@ PatternElem::bodySize()
 // 2. AND init1 + sum of deltas == init2
 // return true if appended successfully
 bool
-PatternElem::append( PatternElem &other )
+PatternUnit::append( PatternUnit &other )
 {
 
 //    mlog(IDX_WARN, "in %s", __FUNCTION__);
@@ -196,7 +196,7 @@ PatternElem::append( PatternElem &other )
 // (3,3,3)^4 is repeating
 // (0,0)^0 is also repeating
 bool
-PatternElem::isSeqRepeating()
+PatternUnit::isSeqRepeating()
 {
     vector<off_t>::iterator it;
     bool allrepeat = true;
@@ -214,7 +214,7 @@ PatternElem::isSeqRepeating()
 }
 
 void
-PatternElem::compressRepeats()
+PatternUnit::compressRepeats()
 {
     if ( isSeqRepeating() && size() > 1 ) {
         cnt = size();
@@ -226,7 +226,7 @@ PatternElem::compressRepeats()
 
 
 string 
-PatternElem::serialize()
+PatternUnit::serialize()
 {
     string buf; //let me put it in string and see if it works
     header_t seqbodysize;
@@ -247,7 +247,7 @@ PatternElem::serialize()
 
 //This input buf should be [data size of the followed data][data]
 void 
-PatternElem::deSerialize(string buf)
+PatternUnit::deSerialize(string buf)
 {
     header_t totalsize;
     int cur_start = 0;
@@ -265,11 +265,11 @@ PatternElem::deSerialize(string buf)
 
 
 string
-PatternElem::show() const
+PatternUnit::show() const
 {
     ostringstream showstr;
     showstr << init << " ... ";
-    showstr << PatternUnit::show();
+    showstr << PatternElem::show();
     return showstr.str();
 }
 
@@ -291,14 +291,14 @@ PatternUtil::getReqPatList( const vector<Request> &reqs,
     }
 
     // Get the patterns of logical offsets first
-    PatChain<PatternElem>
+    PatChain<PatternUnit>
         offset_pat = getPatChainFromSeq(offsets);
     
     //cout << "before show. offset.size()=" <<
     //     offsets.size() << endl;
     //cout << offset_pat.show() << endl;
 
-    vector<PatternElem>::const_iterator chain_iter;
+    vector<PatternUnit>::const_iterator chain_iter;
     int range_start = 0, range_end; //the range currently processing
     for (chain_iter = offset_pat.begin();
             chain_iter != offset_pat.end();
@@ -367,11 +367,11 @@ PatternUtil::generatePatternUtil(
 
 
     // Get the patterns of logical offsets first
-    PatChain<PatternElem> offset_sig = getPatChainFromSeq(logical_offset);
+    PatChain<PatternUnit> offset_sig = getPatChainFromSeq(logical_offset);
 
     //Now, go through offset_sig one by one and build the IdxSigEntry s
     vector<IdxSigEntry>idx_entry_list;
-    vector<PatternElem>::const_iterator stack_iter;
+    vector<PatternUnit>::const_iterator stack_iter;
 
     int range_start = 0, range_end; //the range currently processing
     for (stack_iter = offset_sig.begin();
@@ -414,19 +414,19 @@ PatternUtil::generatePatternUtil(
 // This is the key function of LZ77. 
 // The input is a sequence of number and 
 // it returns patterns like: i,(x,x,x,..)^r, ...
-PatChain<PatternElem>
+PatChain<PatternUnit>
 PatternUtil::getPatChainFromSeq( vector<off_t> inits )
 {
     //mlog(IDX_WARN, "Entering %s. inits: %s", 
     //     __FUNCTION__, printVector(inits).c_str());
     vector<off_t> deltas = buildDeltas(inits);
-    PatChain<PatternElem> pattern, patterntrim;
+    PatChain<PatternUnit> pattern, patterntrim;
 
     pattern = findPattern( deltas ); // find repeating pattern in deltas
 
     // Put the init back into the patterns
     int pos = 0;
-    vector<PatternElem>::iterator it;
+    vector<PatternUnit>::iterator it;
     for ( it = pattern.chain.begin() ;
           it != pattern.chain.end() ;
           it++ )
@@ -446,7 +446,7 @@ PatternUtil::getPatChainFromSeq( vector<off_t> inits )
         {
             pattern.chain.back().cnt++;
         } else {        
-            PatternElem punit;
+            PatternUnit punit;
             punit.init = inits.back();
             punit.cnt = 1;
             pattern.push(punit);
@@ -491,14 +491,14 @@ PatternUtil::getPatChainFromSeq( vector<off_t> inits )
 }
 
 // It returns repeating patterns of a sequence of numbers. (x,x,x...)^r
-PatChain<PatternElem> 
+PatChain<PatternUnit> 
 PatternUtil::findPattern( vector<off_t> deltas )
 {
     // pointer(iterator) to the lookahead window, both should move together
 //    mlog(IDX_WARN, "Entering %s", __FUNCTION__);
 //    mlog(IDX_WARN, "deltas: %s", printVector(deltas).c_str());
     vector<off_t>::const_iterator p_lookahead_win;
-    PatChain<PatternElem> pattern_stack;
+    PatChain<PatternUnit> pattern_stack;
 
     p_lookahead_win = deltas.begin();
     pattern_stack.clear();
@@ -518,7 +518,7 @@ PatternUtil::findPattern( vector<off_t> deltas )
                 first = p_lookahead_win;
                 last = p_lookahead_win + cur_tuple.length;
 
-                PatternElem pu;
+                PatternUnit pu;
                 pu.seq.assign(first, last);
                 pu.cnt = 2;
 
@@ -527,7 +527,7 @@ PatternUtil::findPattern( vector<off_t> deltas )
             } else {
                 //unsafe
 //                mlog(IDX_WARN, "UNSAFE" );
-                PatternElem pu = pattern_stack.top();
+                PatternUnit pu = pattern_stack.top();
 
                 if ( cur_tuple.length % pu.seq.size() == 0
                      && cur_tuple.length <= pu.seq.size() * pu.cnt ) {
@@ -545,7 +545,7 @@ PatternUtil::findPattern( vector<off_t> deltas )
                     //cannot pop out cur_tuple.length elems without
                     //totally breaking any pattern.
                     //So we simply add one elem to the stack
-                    PatternElem pu;
+                    PatternUnit pu;
                     pu.seq.push_back( *p_lookahead_win );
                     pu.cnt = 1;
                     pattern_stack.push(pu);
@@ -554,7 +554,7 @@ PatternUtil::findPattern( vector<off_t> deltas )
             }
         } else {
             //(0,0,x), nothing repeats
-            PatternElem pu;
+            PatternUnit pu;
             pu.seq.push_back(cur_tuple.next_symbol);
             pu.cnt = 1;
 
@@ -650,7 +650,7 @@ IdxSigEntry::show()
     showstr << "----Logical Offset----" << endl;
     showstr << logical_offset.show();
     
-    vector<PatternElem>::const_iterator iter2;
+    vector<PatternUnit>::const_iterator iter2;
 
     showstr << "----Length----" << endl;
     for (iter2 = length.begin();
@@ -678,7 +678,7 @@ const string
 RequestPatternList::show() const
 {
     vector<RequestPattern>::const_iterator it;
-    vector<PatternElem>::const_iterator it2;
+    vector<PatternUnit>::const_iterator it2;
     
     ostringstream oss;
 
@@ -724,7 +724,7 @@ RequestPattern::futureRequests( int n , int startStride )
     }
 
     off_t off_stride_sum = sumVector(offset.seq);
-    PatternElem mylen = length.chain[0]; // for short
+    PatternUnit mylen = length.chain[0]; // for short
     off_t len_stride_sum = sumVector(mylen.seq);
     int i;
     int offseqsize = offset.seq.size();

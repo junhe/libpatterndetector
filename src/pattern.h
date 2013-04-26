@@ -15,8 +15,8 @@
 
 
 // Pattern Family (from small to big):
-//   PatternUnit
 //   PatternElem
+//   PatternUnit
 //   PatternChain
 
 template <class T> class PatChain;
@@ -38,13 +38,13 @@ class Request {
 // Used to describe a single pattern that is found
 // This will be saved in the stack.
 // For example, (seq)^cnt=(3,5,8)^2
-class PatternUnit {
+class PatternElem {
     public:
         vector<off_t> seq;
         int64_t cnt; //count of repeatition
         
-        PatternUnit() {}
-        PatternUnit( vector<off_t> sq, int ct )
+        PatternElem() {}
+        PatternElem( vector<off_t> sq, int ct )
             :seq(sq),cnt(ct)
         {}
         
@@ -55,7 +55,7 @@ class PatternUnit {
 
 // This is used to describ a single repeating
 // pattern, but with starting value
-class PatternElem: public PatternUnit {
+class PatternUnit: public PatternElem {
     public:
         off_t init; // the initial value of 
                     // logical offset, length, or physical offset
@@ -65,14 +65,14 @@ class PatternElem: public PatternUnit {
         string serialize();
         void deSerialize(string buf);
         off_t getValByPos( const int &pos ) ;
-        bool append( PatternElem &other );
+        bool append( PatternUnit &other );
         bool isSeqRepeating();
         void compressRepeats();
 };
 
 
 
-template <class T> // T can be PatternUnit or PatternElem
+template <class T> // T can be PatternElem or PatternUnit
 class PatternChain {
     public:
         PatternChain() {}
@@ -126,7 +126,7 @@ PatternChain<T>::serialize()
         appendToBuffer(buf, &unit[0], unit.size());
         realtotalsize += unit.size();
         //to test if it serilized right
-        //PatternElem tmp;
+        //PatternUnit tmp;
         //tmp.deSerialize(unit);
         //cout << "test show.\n";
         //tmp.show();
@@ -179,7 +179,7 @@ PatternChain<T>::bodySize()
             iter != chain.end() ;
             iter++ )
     {
-        //PatternElem body size and its header
+        //PatternUnit body size and its header
         totalsize += (iter->bodySize() + sizeof(header_t));
     }
     return totalsize;
@@ -339,8 +339,8 @@ class PatChain: public PatternChain <T>
 // This is one request pattern, with offset and length
 class RequestPattern {
     public:
-        PatternElem offset;
-        PatChain<PatternElem> length;
+        PatternUnit offset;
+        PatChain<PatternUnit> length;
 
         vector<Request> futureRequests( int n, int startStride );
 };
@@ -440,7 +440,7 @@ PatChain<T>::getValByPos( const int &pos )
 // pos has to be in the range
 inline
 off_t
-PatternElem::getValByPos( const int &pos  ) 
+PatternUnit::getValByPos( const int &pos  ) 
 {
     off_t locval = 0;
     int mpos;
@@ -498,14 +498,14 @@ class PatternUtil {
     public:
         PatternUtil() {} 
         static void discoverPattern( vector<off_t> const &seq );
-        static PatChain<PatternElem> discoverSigPattern( vector<off_t> const &seq,
+        static PatChain<PatternUnit> discoverSigPattern( vector<off_t> const &seq,
                 vector<off_t> const &orig );
         //It takes in a entry buffer like in PLFS,
         //analyzes it and generate Index Signature Entries
         //TODO: I'll come back for this function
         //IdxSigEntryList generatePatternUtil(vector<HostEntry> &entry_buf, int proc);
-        static PatChain<PatternElem> findPattern( vector<off_t> deltas );
-        static PatChain<PatternElem> getPatChainFromSeq( vector<off_t> inits );
+        static PatChain<PatternUnit> findPattern( vector<off_t> deltas );
+        static PatChain<PatternUnit> getPatChainFromSeq( vector<off_t> inits );
         static int getReqPatList( const vector<Request> &reqs,
                                   RequestPatternList &patlist);
     private:
