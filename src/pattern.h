@@ -497,9 +497,10 @@ PatternUnit::getValByPos( const int &pos  )
 class PatternUtil {
     public:
         PatternUtil() {} 
-        static void discoverPattern( vector<off_t> const &seq );
-        static PatChain<PatternUnit> discoverSigPattern( vector<off_t> const &seq,
-                vector<off_t> const &orig );
+        //static void discoverPattern( vector<off_t> const &seq );
+        //static PatChain<PatternUnit> discoverSigPattern( vector<off_t> const &seq,
+        //        vector<off_t> const &orig );
+
         //It takes in a entry buffer like in PLFS,
         //analyzes it and generate Index Signature Entries
         //TODO: I'll come back for this function
