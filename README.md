@@ -10,7 +10,6 @@ A lib to find I/O patterns. The algorithm is described in paper:
 
 *** Directory Tree
 pattern.h pattern.cpp ....... the key library files. They do not depend on other files or library (except C++ STL). 
-
 example.cpp ................. an example demostrating the usage of the pattern detector.
 
 *** Usage
