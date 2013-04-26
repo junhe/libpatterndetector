@@ -72,6 +72,20 @@ buildDeltas( vector<off_t> seq )
 }
 
 
+Request::Request(off_t off, off_t len)
+    : offset(off), 
+      length(len)
+{}
+
+Request::Request()
+    : offset(0),
+      length(0)
+{}
+
+
+
+
+
 ///////////////////////////////////////////////
 // PatternUnit
 ///////////////////////////////////////////////

@@ -35,16 +35,6 @@ class Request {
         Request(off_t off, off_t len);
 };
 
-Request::Request(off_t off, off_t len)
-    : offset(off), 
-      length(len)
-{}
-
-Request::Request()
-    : offset(0),
-      length(0)
-{}
-
 // Used to describe a single pattern that is found
 // This will be saved in the stack.
 // For example, (seq)^cnt=(3,5,8)^2
